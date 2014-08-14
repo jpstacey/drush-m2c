@@ -39,11 +39,8 @@ foreach($internal_make_info as $supertype => $packages) {
           "name" => "drupal/$name",
           "version" => $package['version'],
           "type" => "drupal-" . $package['type'],
-          "dist" => array(
-            "url" => $package['download']['download_link'],
-            "type" => "zip"
-          ),
         );
+        $composer_package += _map_download_to_composer_dist($package['download']);
 
         $composer['repositories'][$name] = array(
           "type" => "package",
@@ -54,7 +51,24 @@ foreach($internal_make_info as $supertype => $packages) {
       break;
 
     case "libraries":
-      drush_log("Libraries TODO", "warning");
+      foreach($packages as $name => $package) {
+        // Libraries have no version that Drupal cares about.
+        $package['version'] = "1.0";
+
+        // Assemble a composer package structure.
+        $composer_package = array(
+          "name" => "library/$name",
+          "version" => $package['version'],
+          "type" => "drupal-" . $package['type'],
+        );
+        $composer_package += _map_download_to_composer_dist($package['download']);
+
+        $composer['repositories'][$name] = array(
+          "type" => "package",
+          "package" => $composer_package,
+        );
+        $composer['require'][$composer_package['name']] = $composer_package['version'];
+      }
       break;
 
     default:
@@ -62,4 +76,4 @@ foreach($internal_make_info as $supertype => $packages) {
   }
 }
 
-drush_log("Non-d.o downloads and DVCS generally TODO", "warning");
+print json_encode($composer, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
