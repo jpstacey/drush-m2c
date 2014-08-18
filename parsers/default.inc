@@ -42,6 +42,7 @@ function m2c_parsers_default_m2c($internal_make_info) {
   foreach($internal_make_info as $supertype => $packages) {
     switch($supertype) {
       case "contrib":
+      case "core":
         foreach($packages as $name => $package) {
           // Package version can be empty, even after autodiscovery.
           if ($package["version"] == "") {
