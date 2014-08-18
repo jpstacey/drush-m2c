@@ -48,15 +48,21 @@ function m2c_parsers_default_m2c($internal_make_info) {
           // Assemble a composer package structure.
           $composer_package = array(
             "name" => "drupal/$name",
-            "version" => $package['version'],
             "type" => "drupal-" . $package['type'],
+            // Version not always defined in original makefile; we can't use "core",
+            // because Composer version numbers cannot end ".x".
+            "version" => $package['version'] ? $package['version'] : "0.111",
           );
-          $composer_package += _m2c_map_download_to_composer_dist($package['download']);
 
+          // Get dist/source based on download method.
+          $composer_package += _m2c_map_download_to_composer_dist($package['download'], $package);
+
+          // Put package in as a package repository.
           $composer['repositories'][$name] = array(
             "type" => "package",
             "package" => $composer_package,
           );
+          // Then reference it as a requirement, matching the package version.
           $composer['require'][$composer_package['name']] = $composer_package['version'];
         }
         break;
@@ -74,7 +80,9 @@ function m2c_parsers_default_m2c($internal_make_info) {
           );
           $composer_package += _m2c_map_download_to_composer_dist($package['download']);
 
-          $composer['repositories'][$name] = array(
+          // Put package in as a package repository, avoiding name clash
+          // with any Drupal projects e.g. colorbox, flexslider etc.
+          $composer['repositories']["libraries/$name"] = array(
             "type" => "package",
             "package" => $composer_package,
           );
@@ -92,8 +100,16 @@ function m2c_parsers_default_m2c($internal_make_info) {
 
 /**
  * Helper function to map a download array to a composer source/dist.
+ *
+ * @param array $download
+ *   the download array from the makefile package
+ * @param array $package
+ *   optional array of full package data, where autodiscovery is still required.
+ *
+ * @return array
+ *   dist/source data for composer.
  */
-function _m2c_map_download_to_composer_dist($download) {
+function _m2c_map_download_to_composer_dist($download, $package = NULL) {
   $url = "";
   foreach(array("url", "download_link") as $key) {
     if (array_key_exists($key, $download)) {
@@ -105,9 +121,6 @@ function _m2c_map_download_to_composer_dist($download) {
   if (!isset($download['type'])) {
     $download['type'] = "get";
   }
-
-  $dist = array(
-  );
 
   switch($download['type']) {
     // Drush pm always returns a gzip file.
@@ -148,6 +161,11 @@ function _m2c_map_download_to_composer_dist($download) {
           $reference = $download[$commitish];
           break;
         }
+      }
+
+      // Auto-guess a URL if none given, asssuming it's a Drupal project.
+      if (!$url && isset($package)) {
+        $url = "http://git.drupal.org/project/" . $package['name'] . ".git";
       }
 
       // => git.
