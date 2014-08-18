@@ -140,7 +140,7 @@ function _m2c_map_download_to_composer_dist($download, $package = NULL) {
     }
   }
 
-  // Without a download type, just assume HTTP GET.kj
+  // Without a download type, just assume HTTP GET.
   if (!isset($download['type'])) {
     $download['type'] = "get";
   }
@@ -156,13 +156,36 @@ function _m2c_map_download_to_composer_dist($download, $package = NULL) {
         ),
       );
 
-    // Standard HTTP GET, possibly mediated by drush pm.
+    // Standard HTTP GET.
     case "get":
+      // Try to autodetect from the URL.
+      $type = NULL;
+      foreach (array(".gz" => "gzip", ".tgz" => "gzip", ".zip" => "zip") as $zip_suffix => $zip_type) {
+        if (strpos(strrev($url), strrev($zip_suffix)) === 0) {
+          $type = $zip_type;
+          break;
+        }
+      }
+
+      // If we're no wiser - some URLs end /download - try a HTTP request.
+      if ($type === NULL) {
+        drush_shell_exec("curl --fail -s -L --connect-timeout 30 -I %s | grep 'Content-Type:'", $url);
+        $matches = drush_shell_exec_output();
+        if ($matches) {
+          foreach (array("gzip", "zip") as $zip_type) {
+            if (strpos($matches[0], "application/$zip_type")) {
+              $type = $zip_type;
+              break;
+            }
+          }
+        }
+      }
+
       // Assume "zip"
       return array(
         "dist" => array(
           "url" => $url,
-          "type" => "zip",
+          "type" => $type ? $type : "zip",
         ),
       );
 
