@@ -97,7 +97,7 @@ function _make_projects_hacked($recursion, $contrib_destination, $info, $build_p
         if (!drush_get_option('no-cache', FALSE)) {
           drush_set_option('cache', TRUE);
         }
-        $release = release_info_fetch($request, '', 'ignore');
+        $release = release_info_fetch($request, '');
         if ($release === FALSE) {
           return FALSE;
         }
@@ -163,68 +163,4 @@ function _make_libraries_hacked($contrib_destination, $info, $build_path, $make_
   }
 
   return $info['libraries'];
-}
-
-/**
- * Helper function to map
- */
-function _map_download_to_composer_dist($download) {
-  $url = "";
-  foreach(array("url", "download_link") as $key) {
-    if (array_key_exists($key, $download)) {
-      $url = $download[$key];
-    }
-  }
-
-  // Without a download type, just assume HTTP GET.kj
-  if (!isset($download['type'])) {
-    $download['type'] = "get";
-  }
-
-  $dist = array(
-  );
-
-  switch($download['type']) {
-    // Drush pm always returns a gzip file.
-    case "pm":
-      // Assume "gzip"
-      return array(
-        "dist" => array(
-          "url" => $url,
-          "type" => "gzip",
-        ),
-      );
-
-    // Standard HTTP GET, possibly mediated by drush pm.
-    case "get":
-      // Assume "zip"
-      return array(
-        "dist" => array(
-          "url" => $url,
-          "type" => "zip",
-        ),
-      );
-
-    case "git":
-      // Work out the git reference, in Drush-make precedence order.
-      $reference = "master";
-      foreach (array("tag", "branch", "revision") as $commitish) {
-        if (isset($download[$commitish])) {
-          $reference = $download[$commitish];
-          break;
-        }
-      }
-
-      // => git.
-      return array(
-        "source" => array(
-          "url" => $url,
-          "type" => "git",
-          "reference" => $reference,
-        ),
-      );
-
-    default:
-      throw new Exception("Unknown make download type " . $download['type']);
-  }
 }

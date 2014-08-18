@@ -51,7 +51,7 @@ function m2c_parsers_default_m2c($internal_make_info) {
             "version" => $package['version'],
             "type" => "drupal-" . $package['type'],
           );
-          $composer_package += _map_download_to_composer_dist($package['download']);
+          $composer_package += _m2c_map_download_to_composer_dist($package['download']);
 
           $composer['repositories'][$name] = array(
             "type" => "package",
@@ -72,7 +72,7 @@ function m2c_parsers_default_m2c($internal_make_info) {
             "version" => $package['version'],
             "type" => "drupal-" . $package['type'],
           );
-          $composer_package += _map_download_to_composer_dist($package['download']);
+          $composer_package += _m2c_map_download_to_composer_dist($package['download']);
 
           $composer['repositories'][$name] = array(
             "type" => "package",
@@ -85,5 +85,86 @@ function m2c_parsers_default_m2c($internal_make_info) {
       default:
         drush_log("Didn't deal with make section $supertype", "warning");
     }
+  }
+
+  return $composer;
+}
+
+/**
+ * Helper function to map a download array to a composer source/dist.
+ */
+function _m2c_map_download_to_composer_dist($download) {
+  $url = "";
+  foreach(array("url", "download_link") as $key) {
+    if (array_key_exists($key, $download)) {
+      $url = $download[$key];
+    }
+  }
+
+  // Without a download type, just assume HTTP GET.kj
+  if (!isset($download['type'])) {
+    $download['type'] = "get";
+  }
+
+  $dist = array(
+  );
+
+  switch($download['type']) {
+    // Drush pm always returns a gzip file.
+    case "pm":
+      // Assume "gzip"
+      return array(
+        "dist" => array(
+          "url" => $url,
+          "type" => "gzip",
+        ),
+      );
+
+    // Standard HTTP GET, possibly mediated by drush pm.
+    case "get":
+      // Assume "zip"
+      return array(
+        "dist" => array(
+          "url" => $url,
+          "type" => "zip",
+        ),
+      );
+
+    case "file":
+      // Does Composer even have a "file" dist type?
+      return array(
+        "dist" => array(
+          "url" => $url,
+          "type" => "file",
+        ),
+      );
+
+
+    case "git":
+      // Work out the git reference, in Drush-make precedence order.
+      $reference = "master";
+      foreach (array("tag", "branch", "revision") as $commitish) {
+        if (isset($download[$commitish])) {
+          $reference = $download[$commitish];
+          break;
+        }
+      }
+
+      // => git.
+      return array(
+        "source" => array(
+          "url" => $url,
+          "type" => "git",
+          "reference" => $reference,
+        ),
+      );
+
+    default:
+      // Report error as an exception.
+      $type = $download['type'];
+      unset($download['type']);
+      throw new Exception(
+        "Unknown make download type $type; more info: " . var_export($download, TRUE)
+      );
   }
 }
