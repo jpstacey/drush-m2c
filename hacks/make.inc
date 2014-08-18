@@ -34,6 +34,12 @@ function _make_projects_hacked($recursion, $contrib_destination, $info, $build_p
     if (isset($project['md5'])) {
       $md5 = $project['md5'];
     }
+    // HACK: Drush make format used to permit version number as string.
+    // This persists in some old makefiles, so cope with it.
+    if (!is_array($project) && ($project * 1)) {
+      $project = array("version" => $project);
+    }
+    // ENDHACK
     // Merge the known data onto the project info.
     $project += array(
       'name'                => $key,
