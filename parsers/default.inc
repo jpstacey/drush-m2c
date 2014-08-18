@@ -147,13 +147,14 @@ function _m2c_map_download_to_composer_dist($download, $package = NULL) {
   }
 
   switch($download['type']) {
-    // Drush pm always returns a gzip file.
+    // Drush pm always returns a tar.gz file.
     case "pm":
-      // Assume "gzip"
+      // "tar" basically covers .tar, .tar.gz and .tgz, which is convenient
+      // here but causes some problems below (see MIME type guessing.)
       return array(
         "dist" => array(
           "url" => $url,
-          "type" => "gzip",
+          "type" => "tar",
         ),
       );
 
@@ -161,7 +162,7 @@ function _m2c_map_download_to_composer_dist($download, $package = NULL) {
     case "get":
       // Try to autodetect from the URL.
       $type = NULL;
-      foreach (array(".gz" => "gzip", ".tgz" => "gzip", ".zip" => "zip") as $zip_suffix => $zip_type) {
+      foreach (array("tar.gz" => "tar", ".tgz" => "tar", ".gz" => "gzip", ".zip" => "zip") as $zip_suffix => $zip_type) {
         if (strpos(strrev($url), strrev($zip_suffix)) === 0) {
           $type = $zip_type;
           break;
@@ -173,8 +174,11 @@ function _m2c_map_download_to_composer_dist($download, $package = NULL) {
         drush_shell_exec("curl --fail -s -L --connect-timeout 30 -I %s | grep 'Content-Type:'", $url);
         $matches = drush_shell_exec_output();
         if ($matches) {
-          foreach (array("gzip", "zip") as $zip_type) {
-            if (strpos($matches[0], "application/$zip_type")) {
+          // Sadly we can't tell the difference between a gzipped tar and a
+          // straight gzipped file - we assume the former as it's what d.o
+          // assumes. Gzipping a single file is much rarer anyway.
+          foreach (array("gzip" => "tar", "zip" => "zip") as $mime => $zip_type) {
+            if (strpos($matches[0], "application/$mime")) {
               $type = $zip_type;
               break;
             }
