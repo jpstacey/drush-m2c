@@ -76,7 +76,8 @@ function m2c_parsers_default_m2c($internal_make_info) {
           $composer_package = array(
             "name" => "library/$name",
             "version" => $package['version'],
-            "type" => "drupal-" . $package['type'],
+            // Hardwire this, just in case it's omitted.
+            "type" => "drupal-library",
           );
           $composer_package += _m2c_map_download_to_composer_dist($package['download']);
 
