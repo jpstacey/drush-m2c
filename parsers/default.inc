@@ -5,6 +5,9 @@
  * Engine: parsers, default.
  */
 
+// Often we need to fake a version for Composer.
+define("M2C_FAKE_VERSION", "111");
+
 /**
  * Parse a makefile into the internal format provided by make.
  */
@@ -45,13 +48,32 @@ function m2c_parsers_default_m2c($internal_make_info) {
             $package["version"] = str_replace($package["core"] . "-", "", $package['download']['full_version']);
           }
 
+          // Composer cannot make sense of -unstable tags.
+          if (strpos($package["version"], "unstable") !== FALSE) {
+            $package['version'] = str_replace("-unstable", "." . M2C_FAKE_VERSION . ".", $package['version']);
+            drush_log(dt(
+              "Package !p: replaced -unstable with !v for Composer compatibility; should not affect actual download.",
+              array("!p" => $name, "!v" => M2C_FAKE_VERSION)
+            ), "ok");
+          }
+
+          // Finally, if we really don't have a package version, make one up.
+          $version = $package['version'];
+          if (!$version) {
+            $version = M2C_FAKE_VERSION;
+            drush_log(dt(
+              "Package !p: replaced empty version with !v for Composer compatibility; should not affect actual download.",
+              array("!p" => $name, "!v" => M2C_FAKE_VERSION)
+            ), "ok");
+          }
+
           // Assemble a composer package structure.
           $composer_package = array(
             "name" => "drupal/$name",
             "type" => "drupal-" . $package['type'],
             // Version not always defined in original makefile; we can't use "core",
             // because Composer version numbers cannot end ".x".
-            "version" => $package['version'] ? $package['version'] : "0.111",
+            "version" => $version,
           );
 
           // Get dist/source based on download method.
