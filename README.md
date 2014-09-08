@@ -7,7 +7,7 @@ WARNING
 -------
 
 It's very much in alpha and you should only use it at your own risk. You're
-very much likely to have to edit the compopser.json afterwards.
+very much likely to have to edit the composer.json afterwards.
 
 Usage
 -----
