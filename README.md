@@ -37,12 +37,12 @@ core-plus-contrib: your files will be in the following locations:
 * vendor/drupal/drupal/ <- core
 
 You will need to manually rearrange these files to get your build to work.
-However, this is a task that could be very much suited to Drush instance:
+However, this is a task that is very much suited to Drush instance:
 
 https://www.drupal.org/project/drush_instance
 
-There's an open issue to handle this in a future release.
+This supports composer.json, in the above format, as of 7.x-1.2.
 
-Another thing Composer doesn't do (yet) is apply patches, post-install. This
-is an open issue on this project but isn't likely to be solved at this level
-alone.
+Patches can also be applied using the jpstacey/composer-patches Packagist project:
+
+https://packagist.org/packages/jpstacey/composer-patcher
