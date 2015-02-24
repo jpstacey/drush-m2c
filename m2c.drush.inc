@@ -48,7 +48,7 @@ function drush_m2c_validate($makefile = NULL) {
     return;
   }
   if (!file_exists($makefile)) {
-    drush_set_error("DRUSH_M2C_NO_MAKEFILE", "Makefile does not exist: '$make'.");
+    drush_set_error("DRUSH_M2C_NO_MAKEFILE", "Makefile does not exist: '$makefile'.");
     return;
   }
 }
