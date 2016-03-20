@@ -6,8 +6,14 @@ Converter from a Drush makefile to composer.json
 WARNING
 -------
 
-It's very much in alpha and you should only use it at your own risk. You're
-very much likely to have to edit the composer.json afterwards.
+This code is an alpha proof of concept, and you should only use it at your own risk. You're very much likely to have to edit the composer.json afterwards.
+
+Pull requests are welcome, but the project is not being maintained on an ongoing basis. Feel free to fork the original repository at https://github.com/jpstacey/drush-m2c as much as you like.
+
+Pre-requisites
+--------------
+
+This has been written to work with Drush 6.x, and is unlikely to work with later versions of Drush. As mentioned under the warning above I'll be happy to look at pull requests.
 
 Usage
 -----
